@@ -50,6 +50,7 @@ void display_usage();
 /* Program flags/options, set by arguments or config file */
 static unsigned int parse_count = 0;
 static int daemon_mode = 0;
+static int eth_skip_bits = 0;
 static char *use_infile = NULL;
 static char *interface = NULL;
 static char *capfilter = NULL;
@@ -306,6 +307,8 @@ void parse_http_packet(u_char *args, const struct pcap_pkthdr *header, const u_c
         } else {
                 header_offset = eth_offset;
         }
+
+        header_offset += eth_skip_bits;
 
         /* Position pointers within packet stream and do sanity checks */
         ip = (struct ip_header *) (pkt + header_offset);
@@ -648,6 +651,7 @@ void display_usage() {
                "   -s           run in HTTP requests per second mode\n"
                "   -t seconds   specify the display interval for rate statistics\n"
                "   -u user      set process owner\n"
+               "   -S count     Number of bytes need to be skipped after ethernet header\n"
                "   expression   specify a bpf-style capture filter\n\n");
 
         printf("Additional information can be found at:\n"
@@ -666,7 +670,7 @@ int main(int argc, char **argv) {
         signal(SIGINT, &handle_signal);
 
         /* Process command line arguments */
-        while ((opt = getopt(argc, argv, "b:df:Fhpqi:l:m:n:o:P:r:st:u:")) != -1) {
+        while ((opt = getopt(argc, argv, "b:df:Fhpqi:l:m:n:o:P:r:st:u:S:")) != -1) {
                 switch (opt) {
                         case 'b': use_dumpfile = optarg; break;
                         case 'd': daemon_mode = 1; use_syslog = 1; break;
@@ -685,6 +689,7 @@ int main(int argc, char **argv) {
                         case 's': rate_stats = 1; break;
                         case 't': rate_interval = atoi(optarg); break;
                         case 'u': new_user = optarg; break;
+                        case 'S': eth_skip_bits = atoi(optarg); break;
                         default: display_usage();
                 }
         }
